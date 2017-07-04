@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="VerticalSnapPicker">
+        <attr name="highlight_line_side_margin" format="dimension"/>
+        <attr name="highlight_line_thickness" format="dimension"/>
+        <attr name="text_size" format="dimension"/>
+        <attr name="item_height" format="dimension"/>
+        <attr name="default_text_color" format="color"/>
+        <attr name="selected_text_color" format="color"/>
+        <attr name="highlight_line_color" format="color"/>
+    </declare-styleable>
+</resources>

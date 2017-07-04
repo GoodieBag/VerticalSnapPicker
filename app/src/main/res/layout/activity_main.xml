@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center"
+    android:orientation="vertical">
+
+        <in.goodiebag.verticalsnappicker.VerticalSnapPicker
+            android:id="@+id/picker"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            app:highlight_line_color="#ff0000"
+            app:highlight_line_thickness="1dp"
+            app:highlight_line_side_margin="25dp"
+            app:default_text_color="#00ff00"
+            app:selected_text_color="#0000ff"
+            app:text_size="14sp"
+            app:item_height="100dp"/>
+
+</RelativeLayout>
