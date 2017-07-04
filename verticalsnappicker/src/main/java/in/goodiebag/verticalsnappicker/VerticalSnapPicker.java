@@ -37,6 +37,7 @@ public class VerticalSnapPicker extends ScrollView {
     private int highlightLineThickness = 1;
     private int highlightLineMargin = 10;
     private int textSize = 14;
+    VerticalSnapPickerListener mListener = null;
 
     int[][] states;
     int[] colors;
@@ -107,7 +108,7 @@ public class VerticalSnapPicker extends ScrollView {
             highlightLineColor = array.getColor(R.styleable.VerticalSnapPicker_highlight_line_color, selectedTextColor);
             highlightLineThickness = (int) array.getDimension(R.styleable.VerticalSnapPicker_highlight_line_thickness, (int) (highlightLineThickness * DENSITY));
             highlightLineMargin = (int) array.getDimension(R.styleable.VerticalSnapPicker_highlight_line_side_margin, (int) (highlightLineMargin * DENSITY));
-            textSize = (int) array.getDimension(R.styleable.VerticalSnapPicker_text_size,textSize);
+            textSize = (int) array.getDimension(R.styleable.VerticalSnapPicker_text_size, textSize);
             array.recycle();
         }
 
@@ -203,7 +204,10 @@ public class VerticalSnapPicker extends ScrollView {
         int cst = getScrollY();
         mSelectedIndex = Math.round(((float) cst) / itemHeight);
         final int stt = mSelectedIndex * itemHeight;
-        if(mSelectedIndex !=0 || mSelectedIndex <= textItems.size()) {
+        if (mListener != null) {
+            mListener.onSnap(mSelectedIndex);
+        }
+        if (mSelectedIndex != 0 || mSelectedIndex <= textItems.size()) {
             TextView textView;
             textView = textViews.get(mSelectedIndex);
             textView.setSelected(true);
@@ -337,5 +341,13 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setTextSize(int textSize) {
         this.textSize = textSize;
+    }
+
+    public void setOnSnapListener(VerticalSnapPickerListener mListener) {
+        this.mListener = mListener;
+    }
+
+    public interface VerticalSnapPickerListener {
+        void onSnap(int position);
     }
 }

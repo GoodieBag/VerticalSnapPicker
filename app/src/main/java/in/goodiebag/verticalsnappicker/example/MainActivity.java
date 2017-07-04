@@ -2,6 +2,7 @@ package in.goodiebag.verticalsnappicker.example;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -23,6 +24,12 @@ public class MainActivity extends AppCompatActivity {
         items.add(new VerticalSnapPicker.TextItem("Three","Roboto-Bold.ttf"));
         //items.add(new VerticalSnapPicker.TextItem("Four","Roboto-BoldCondensed.ttf"));
         picker.setList(items);
+        picker.setOnSnapListener(new VerticalSnapPicker.VerticalSnapPickerListener() {
+            @Override
+            public void onSnap(int position) {
+                Log.d("Position", position+"");
+            }
+        });
 
     }
 }
