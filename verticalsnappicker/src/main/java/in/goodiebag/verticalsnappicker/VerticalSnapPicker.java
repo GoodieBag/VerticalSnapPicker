@@ -161,6 +161,7 @@ public class VerticalSnapPicker extends ScrollView {
         handler.removeCallbacks(mSnapRunner);
         Log.d("SCROLLVIEW", "Fling");
         mIsFling = true;*/
+
     }
 
     @Override
