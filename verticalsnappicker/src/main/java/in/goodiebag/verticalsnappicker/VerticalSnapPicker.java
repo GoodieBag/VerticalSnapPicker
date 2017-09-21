@@ -60,6 +60,7 @@ public class VerticalSnapPicker extends ScrollView {
     private LinearLayout parentLinearLayout;
     private Runnable mSnapRunner;
     private int mSelectedIndex = -1;
+    private int mOffset = itemHeight;
 
     public VerticalSnapPicker(Context context) {
         this(context, null);
@@ -103,6 +104,7 @@ public class VerticalSnapPicker extends ScrollView {
         if (attrs != null) {
             final TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.VerticalSnapPicker, defStyleAttr, 0);
             itemHeight = (int) array.getDimension(R.styleable.VerticalSnapPicker_item_height, itemHeight);
+            mOffset = (int) array.getDimension(R.styleable.VerticalSnapPicker_item_vertical_offset, itemHeight);
             defaultTextColor = array.getColor(R.styleable.VerticalSnapPicker_default_text_color, Color.BLACK);
             selectedTextColor = array.getColor(R.styleable.VerticalSnapPicker_selected_text_color, defaultTextColor);
             highlightLineColor = array.getColor(R.styleable.VerticalSnapPicker_highlight_line_color, selectedTextColor);
@@ -128,10 +130,14 @@ public class VerticalSnapPicker extends ScrollView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(mOffset*2+itemHeight, MeasureSpec.EXACTLY));
         //setMeasuredDimension(getMeasuredWidth(), NUMBER_VIEWS_VISIBLE*ITEM_HEIGHT);
         padding = (getMeasuredHeight() - itemHeight) / 2;
 
+        Log.d("MEASURE", getMeasuredHeight() + " - " + itemHeight);
+        if (getMeasuredHeight() > 600) {
+            Log.d("AJHGDhja", "kjshdkad");
+        }
 
         if (!paddingAdded) {
             View v;
@@ -231,6 +237,52 @@ public class VerticalSnapPicker extends ScrollView {
         Log.d("SCROLLVIEW", "ScrollY: " + getScrollY() + " " + itemHeight);
     }
 
+
+    private void snapTo(int index) {
+        if (index < 0 || index >= textItems.size())
+            return;
+
+
+        if (previousSelected != null) {
+            previousSelected.setSelected(false);
+        }
+
+        mIsScrolling = false;
+        mIsFling = false;
+
+        if (mIsSnapping)
+            return;
+
+        mIsSnapping = true;
+        int cst = getScrollY();
+        mSelectedIndex = index;
+        final int stt = mSelectedIndex * itemHeight;
+//        if (mListener != null) {
+//            mListener.onSnap(mSelectedIndex);
+//        }
+        if (mSelectedIndex != 0 || mSelectedIndex <= textItems.size()) {
+            TextView textView;
+            textView = textViews.get(mSelectedIndex);
+            textView.setSelected(true);
+        }
+        previousSelected = textViews.get(mSelectedIndex);
+        ValueAnimator animator = ValueAnimator.ofInt(cst, stt);
+        animator.setDuration(200);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                int value = (Integer) valueAnimator.getAnimatedValue();
+                setScrollY(value);
+                if (value == stt) {
+                    mIsSnapping = false;
+                }
+            }
+        });
+        animator.start();
+        //setScrollY(mSelectedIndex * ITEM_HEIGHT);
+        Log.d("SCROLLVIEW", "ScrollY: " + getScrollY() + " " + itemHeight);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -302,6 +354,7 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setDefaultTextColor(int defaultTextColor) {
         this.defaultTextColor = defaultTextColor;
+        invalidate();
     }
 
     public int getSelectedTextColor() {
@@ -310,6 +363,7 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setSelectedTextColor(int selectedTextColor) {
         this.selectedTextColor = selectedTextColor;
+        invalidate();
     }
 
     public int getHighlightLineColor() {
@@ -318,6 +372,7 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setHighlightLineColor(int highlightLineColor) {
         this.highlightLineColor = highlightLineColor;
+        invalidate();
     }
 
     public int getHighlightLineThickness() {
@@ -326,6 +381,7 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setHighlightLineThickness(int highlightLineThickness) {
         this.highlightLineThickness = highlightLineThickness;
+        invalidate();
     }
 
     public int getHighlightLineMargin() {
@@ -334,6 +390,7 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setHighlightLineMargin(int highlightLineMargin) {
         this.highlightLineMargin = highlightLineMargin;
+        invalidate();
     }
 
     public int getTextSize() {
@@ -342,6 +399,14 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setTextSize(int textSize) {
         this.textSize = textSize;
+    }
+
+    public int getSelectedIndex() {
+        return mSelectedIndex;
+    }
+
+    public void setSelectedIndex(int mSelectedIndex) {
+        snapTo(mSelectedIndex);
     }
 
     public void setOnSnapListener(VerticalSnapPickerListener mListener) {

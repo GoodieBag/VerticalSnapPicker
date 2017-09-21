@@ -22,6 +22,15 @@ public class MainActivity extends AppCompatActivity {
         items.add(new VerticalSnapPicker.TextItem("One","Roboto-Black.ttf"));
         items.add(new VerticalSnapPicker.TextItem("Two","Roboto-BlackItalic.ttf"));
         items.add(new VerticalSnapPicker.TextItem("Three","Roboto-Bold.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Four","Roboto-Black.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Five","Roboto-BlackItalic.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Six","Roboto-Bold.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Seven","Roboto-Black.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Eight","Roboto-BlackItalic.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Nine","Roboto-Bold.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Ten","Roboto-Black.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Eleven","Roboto-BlackItalic.ttf"));
+        items.add(new VerticalSnapPicker.TextItem("Twelve","Roboto-Bold.ttf"));
         //items.add(new VerticalSnapPicker.TextItem("Four","Roboto-BoldCondensed.ttf"));
         picker.setList(items);
         picker.setOnSnapListener(new VerticalSnapPicker.VerticalSnapPickerListener() {
@@ -30,6 +39,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Position", position+"");
             }
         });
+
+        picker.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                picker.setSelectedIndex(10);
+            }
+        }, 3000);
 
     }
 }

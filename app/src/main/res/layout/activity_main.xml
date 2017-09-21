@@ -9,13 +9,15 @@
         <in.goodiebag.verticalsnappicker.VerticalSnapPicker
             android:id="@+id/picker"
             android:layout_width="300dp"
-            android:layout_height="300dp"
+            android:layout_height="wrap_content"
             app:highlight_line_color="#ff0000"
             app:highlight_line_thickness="1dp"
             app:highlight_line_side_margin="25dp"
             app:default_text_color="#00ff00"
             app:selected_text_color="#0000ff"
+            android:background="#ccc"
             app:text_size="14sp"
-            app:item_height="100dp"/>
+            app:item_height="100dp"
+            app:item_vertical_offset="200dp"/>
 
 </RelativeLayout>

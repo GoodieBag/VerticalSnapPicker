@@ -4,6 +4,7 @@
         <attr name="highlight_line_side_margin" format="dimension"/>
         <attr name="highlight_line_thickness" format="dimension"/>
         <attr name="text_size" format="dimension"/>
+        <attr name="item_vertical_offset" format="dimension"/>
         <attr name="item_height" format="dimension"/>
         <attr name="default_text_color" format="color"/>
         <attr name="selected_text_color" format="color"/>
