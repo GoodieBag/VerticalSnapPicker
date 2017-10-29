@@ -34,33 +34,27 @@ public class VerticalSnapPicker extends ScrollView {
 
     private int itemHeight = 100;
     @ColorInt
-    private int defaultTextColor, selectedTextColor, highlightLineColor;
-    private int highlightLineThickness = 1;
-    private int highlightLineMargin = 10;
-    private int textSize = 14;
-    VerticalSnapPickerListener mListener = null;
+    private int mDefaultTextColor, mSelectedTextColor, mHighlightLineColor;
+    private int mHighlightLineThickness = 1;
+    private int mHighlightLineMargin = 10;
+    private int mTextSize = 14;
+    private VerticalSnapPickerListener mListener = null;
 
-//    int[][] states;
-//    int[] colors;
-//    ColorStateList textColorList;
+    private View mPreviousSelected = null;
+    private boolean mPaddingAdded = false;
 
-    View previousSelected = null;
-    private boolean paddingAdded = false;
+    private List<TextItem> mTextItems = new ArrayList<>();
 
-    List<TextItem> textItems = new ArrayList<>();
-
-    MarginLayoutParams lp;
-    int padding;
-    int startX, startY, endX, endY;
-    Paint paint = new Paint();
+    private int mPadding;
+    private Paint mHighlightPaint;
 
 
-    private Handler handler;
+    private Handler mHandler;
     private boolean mIsFling, mIsScrolling, mIsSnapping;
-    private LinearLayout parentLinearLayout;
+    private LinearLayout mParentLinearLayout;
     private Runnable mSnapRunner;
     private int mSelectedIndex = -1;
-    private int mOffset = itemHeight;
+    private int mOffset;
 
     public VerticalSnapPicker(Context context) {
         this(context, null);
@@ -73,11 +67,10 @@ public class VerticalSnapPicker extends ScrollView {
     public VerticalSnapPicker(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         itemHeight = (int) (itemHeight * getResources().getDisplayMetrics().density);
-        handler = new Handler();
+        mHandler = new Handler();
         mSnapRunner = new Runnable() {
             @Override
             public void run() {
-                Log.d("SCROLLVIEW", "SNAP FROM Runner");
                 snap();
             }
         };
@@ -86,16 +79,16 @@ public class VerticalSnapPicker extends ScrollView {
     }
 
     private void init(Context context) {
-        parentLinearLayout = new LinearLayout(context);
-        parentLinearLayout.setOrientation(LinearLayout.VERTICAL);
-        paint.setColor(highlightLineColor);
-        paint.setStrokeWidth(highlightLineThickness);
-        this.addView(parentLinearLayout);
-        ViewGroup.LayoutParams lp = parentLinearLayout.getLayoutParams();
+        mParentLinearLayout = new LinearLayout(context);
+        mParentLinearLayout.setOrientation(LinearLayout.VERTICAL);
+        mHighlightPaint=new Paint();
+        mHighlightPaint.setColor(mHighlightLineColor);
+        mHighlightPaint.setStrokeWidth(mHighlightLineThickness);
+        this.addView(mParentLinearLayout);
+        ViewGroup.LayoutParams lp = mParentLinearLayout.getLayoutParams();
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        parentLinearLayout.setLayoutParams(lp);
-        //parentLinearLayout.setPadding(0,ITEM_HEIGHT,0,ITEM_HEIGHT);
+        mParentLinearLayout.setLayoutParams(lp);
         setOverScrollMode(OVER_SCROLL_NEVER);
     }
 
@@ -105,12 +98,12 @@ public class VerticalSnapPicker extends ScrollView {
             final TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.VerticalSnapPicker, defStyleAttr, 0);
             itemHeight = (int) array.getDimension(R.styleable.VerticalSnapPicker_item_height, itemHeight);
             mOffset = (int) array.getDimension(R.styleable.VerticalSnapPicker_item_vertical_offset, itemHeight);
-            defaultTextColor = array.getColor(R.styleable.VerticalSnapPicker_default_text_color, Color.BLACK);
-            selectedTextColor = array.getColor(R.styleable.VerticalSnapPicker_selected_text_color, defaultTextColor);
-            highlightLineColor = array.getColor(R.styleable.VerticalSnapPicker_highlight_line_color, selectedTextColor);
-            highlightLineThickness = (int) array.getDimension(R.styleable.VerticalSnapPicker_highlight_line_thickness, (int) (highlightLineThickness * DENSITY));
-            highlightLineMargin = (int) array.getDimension(R.styleable.VerticalSnapPicker_highlight_line_side_margin, (int) (highlightLineMargin * DENSITY));
-            textSize = (int) array.getDimension(R.styleable.VerticalSnapPicker_text_size, textSize);
+            mDefaultTextColor = array.getColor(R.styleable.VerticalSnapPicker_default_text_color, Color.BLACK);
+            mSelectedTextColor = array.getColor(R.styleable.VerticalSnapPicker_selected_text_color, mDefaultTextColor);
+            mHighlightLineColor = array.getColor(R.styleable.VerticalSnapPicker_highlight_line_color, mSelectedTextColor);
+            mHighlightLineThickness = (int) array.getDimension(R.styleable.VerticalSnapPicker_highlight_line_thickness, (int) (mHighlightLineThickness * DENSITY));
+            mHighlightLineMargin = (int) array.getDimension(R.styleable.VerticalSnapPicker_highlight_line_side_margin, (int) (mHighlightLineMargin * DENSITY));
+            mTextSize = (int) array.getDimension(R.styleable.VerticalSnapPicker_text_size, mTextSize);
             array.recycle();
         }
     }
@@ -121,8 +114,8 @@ public class VerticalSnapPicker extends ScrollView {
                 new int[]{android.R.attr.state_selected}, // enabled
                 new int[]{}, // disabled
         }, new int[]{
-                this.selectedTextColor,
-                this.defaultTextColor
+                this.mSelectedTextColor,
+                this.mDefaultTextColor
         });
     }
 
@@ -130,30 +123,31 @@ public class VerticalSnapPicker extends ScrollView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(mOffset * 2 + itemHeight, MeasureSpec.EXACTLY));
         //setMeasuredDimension(getMeasuredWidth(), NUMBER_VIEWS_VISIBLE*ITEM_HEIGHT);
-        padding = (getMeasuredHeight() - itemHeight) / 2;
+        mPadding = (getMeasuredHeight() - itemHeight) / 2;
 
         Log.d("MEASURE", getMeasuredHeight() + " - " + itemHeight);
         if (getMeasuredHeight() > 600) {
             Log.d("AJHGDhja", "kjshdkad");
         }
 
-        if (!paddingAdded) {
+        if (!mPaddingAdded) {
             View v;
 
-            if (parentLinearLayout.getChildCount() > 0) {
-                v = parentLinearLayout.getChildAt(0);
+            if (mParentLinearLayout.getChildCount() > 0) {
+                v = mParentLinearLayout.getChildAt(0);
+                MarginLayoutParams lp;
                 if (v.getLayoutParams() instanceof MarginLayoutParams) {
                     lp = (MarginLayoutParams) v.getLayoutParams();
-                    lp.setMargins(lp.leftMargin, padding, lp.rightMargin, lp.bottomMargin);
+                    lp.setMargins(lp.leftMargin, mPadding, lp.rightMargin, lp.bottomMargin);
                     v.setLayoutParams(lp);
                 }
-                v = parentLinearLayout.getChildAt(parentLinearLayout.getChildCount() - 1);
+                v = mParentLinearLayout.getChildAt(mParentLinearLayout.getChildCount() - 1);
                 if (v.getLayoutParams() instanceof MarginLayoutParams) {
                     lp = (MarginLayoutParams) v.getLayoutParams();
-                    lp.setMargins(lp.leftMargin, lp.topMargin, lp.rightMargin, padding);
+                    lp.setMargins(lp.leftMargin, lp.topMargin, lp.rightMargin, mPadding);
                     v.setLayoutParams(lp);
                 }
-                paddingAdded = true;
+                mPaddingAdded = true;
             }
         }
     }
@@ -161,11 +155,6 @@ public class VerticalSnapPicker extends ScrollView {
 
     @Override
     public void fling(int velocityY) {
-        /*super.fling(velocityY);
-        handler.removeCallbacks(mSnapRunner);
-        Log.d("SCROLLVIEW", "Fling");
-        mIsFling = true;*/
-
     }
 
     @Override
@@ -174,9 +163,7 @@ public class VerticalSnapPicker extends ScrollView {
         mIsScrolling = true;
         if (mIsFling) {
             if (Math.abs(y - oldY) < 2 || y == 0) {
-                //Log.d("SCROLLVIEW", "Ended: " + Math.abs(y - oldY) + " " + (y >= getMeasuredHeight()) + " " + y);
                 mIsFling = false;
-                Log.d("SCROLLVIEW", "SNAP FROM Fling");
                 snap();
             }
         }
@@ -190,7 +177,7 @@ public class VerticalSnapPicker extends ScrollView {
             case MotionEvent.ACTION_UP:
                 Log.d("SCROLLVIEW", "UP");
                 if (mIsScrolling) {
-                    handler.postDelayed(mSnapRunner, 50);
+                    mHandler.postDelayed(mSnapRunner, 50);
                 }
 
         }
@@ -198,8 +185,8 @@ public class VerticalSnapPicker extends ScrollView {
     }
 
     private void snap() {
-        if (previousSelected != null) {
-            previousSelected.setSelected(false);
+        if (mPreviousSelected != null) {
+            mPreviousSelected.setSelected(false);
         }
         mIsScrolling = false;
         mIsFling = false;
@@ -212,12 +199,12 @@ public class VerticalSnapPicker extends ScrollView {
         if (mListener != null) {
             mListener.onSnap(mSelectedIndex);
         }
-        if (mSelectedIndex != 0 || mSelectedIndex <= textItems.size()) {
+        if (mSelectedIndex != 0 || mSelectedIndex <= mTextItems.size()) {
             TextView textView;
-            textView = (TextView) parentLinearLayout.getChildAt(mSelectedIndex);
+            textView = (TextView) mParentLinearLayout.getChildAt(mSelectedIndex);
             textView.setSelected(true);
         }
-        previousSelected = parentLinearLayout.getChildAt(mSelectedIndex);
+        mPreviousSelected = mParentLinearLayout.getChildAt(mSelectedIndex);
         ValueAnimator animator = ValueAnimator.ofInt(cst, stt);
         animator.setDuration(Math.abs(stt - cst) * 3);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -231,18 +218,16 @@ public class VerticalSnapPicker extends ScrollView {
             }
         });
         animator.start();
-        //setScrollY(mSelectedIndex * ITEM_HEIGHT);
-        Log.d("SCROLLVIEW", "ScrollY: " + getScrollY() + " " + itemHeight);
     }
 
 
     private void snapTo(int index) {
-        if (index < 0 || index >= textItems.size())
+        if (index < 0 || index >= mTextItems.size())
             return;
 
 
-        if (previousSelected != null) {
-            previousSelected.setSelected(false);
+        if (mPreviousSelected != null) {
+            mPreviousSelected.setSelected(false);
         }
 
         mIsScrolling = false;
@@ -255,15 +240,12 @@ public class VerticalSnapPicker extends ScrollView {
         int cst = getScrollY();
         mSelectedIndex = index;
         final int stt = mSelectedIndex * itemHeight;
-//        if (mListener != null) {
-//            mListener.onSnap(mSelectedIndex);
-//        }
-        if (mSelectedIndex != 0 || mSelectedIndex <= textItems.size()) {
+        if (mSelectedIndex != 0 || mSelectedIndex <= mTextItems.size()) {
             TextView textView;
-            textView = (TextView) parentLinearLayout.getChildAt(mSelectedIndex);
+            textView = (TextView) mParentLinearLayout.getChildAt(mSelectedIndex);
             textView.setSelected(true);
         }
-        previousSelected = parentLinearLayout.getChildAt(mSelectedIndex);
+        mPreviousSelected = mParentLinearLayout.getChildAt(mSelectedIndex);
         ;
         ValueAnimator animator = ValueAnimator.ofInt(cst, stt);
         animator.setDuration(200);
@@ -278,27 +260,23 @@ public class VerticalSnapPicker extends ScrollView {
             }
         });
         animator.start();
-        //setScrollY(mSelectedIndex * ITEM_HEIGHT);
-        Log.d("SCROLLVIEW", "ScrollY: " + getScrollY() + " " + itemHeight);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        startX = highlightLineMargin;
-        startY = getScrollY() + padding;
-        endX = startX + getWidth() - 2 * startX;
-        endY = startY;
+        int startX = mHighlightLineMargin;
+        int startY = getScrollY() + mPadding;
+        int endX = startX + getWidth() - 2 * startX;
+        int endY = startY;
 
-        paint.setColor(highlightLineColor);
-        canvas.drawLine(startX, startY, endX, endY, paint);
-        canvas.drawLine(startX, startY + itemHeight, endX, endY + itemHeight, paint);
-
-
+        mHighlightPaint.setColor(mHighlightLineColor);
+        canvas.drawLine(startX, startY, endX, endY, mHighlightPaint);
+        canvas.drawLine(startX, startY + itemHeight, endX, endY + itemHeight, mHighlightPaint);
     }
 
     public List<TextItem> getList() {
-        return textItems;
+        return mTextItems;
     }
 
     public void setList(@NonNull List<TextItem> list) {
@@ -306,14 +284,14 @@ public class VerticalSnapPicker extends ScrollView {
     }
 
     public void setList(@NonNull List<TextItem> list, int selectedIndex) {
-        this.textItems = list;
+        this.mTextItems = list;
         mSelectedIndex = -1;
-        parentLinearLayout.removeAllViews();
-        paddingAdded = false;
-        for (int i = 0; i < textItems.size(); i++) {
-            TextItem item = textItems.get(i);
+        mParentLinearLayout.removeAllViews();
+        mPaddingAdded = false;
+        for (int i = 0; i < mTextItems.size(); i++) {
+            TextItem item = mTextItems.get(i);
             TextView text = new TextView(getContext());
-            parentLinearLayout.addView(text);
+            mParentLinearLayout.addView(text);
             setupTextView(text, item);
         }
         if (list.size() > 0) {
@@ -323,8 +301,7 @@ public class VerticalSnapPicker extends ScrollView {
 
     private void reload() {
         int selected = mSelectedIndex;
-        Log.d("Selected", "Reloading: " + selected);
-        setList(textItems, selected);
+        setList(mTextItems, selected);
     }
 
     private void setupTextView(TextView text, TextItem item) {
@@ -337,7 +314,7 @@ public class VerticalSnapPicker extends ScrollView {
                 ex.printStackTrace();
             }
         }
-        text.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
+        text.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);
         text.setTextColor(getTextColorList());
         text.setGravity(Gravity.CENTER);
         text.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, itemHeight));
@@ -354,58 +331,58 @@ public class VerticalSnapPicker extends ScrollView {
     }
 
     public int getDefaultTextColor() {
-        return defaultTextColor;
+        return mDefaultTextColor;
     }
 
     public void setDefaultTextColor(@ColorInt int defaultTextColor) {
-        this.defaultTextColor = defaultTextColor;
+        this.mDefaultTextColor = defaultTextColor;
         reload();
     }
 
     public int getSelectedTextColor() {
-        return selectedTextColor;
+        return mSelectedTextColor;
     }
 
     public void setSelectedTextColor(@ColorInt int selectedTextColor) {
-        this.selectedTextColor = selectedTextColor;
+        this.mSelectedTextColor = selectedTextColor;
         reload();
     }
 
     public int getHighlightLineColor() {
-        return highlightLineColor;
+        return mHighlightLineColor;
     }
 
     public void setHighlightLineColor(int highlightLineColor) {
-        this.highlightLineColor = highlightLineColor;
+        this.mHighlightLineColor = highlightLineColor;
         invalidate();
     }
 
     public int getHighlightLineThickness() {
-        return highlightLineThickness;
+        return mHighlightLineThickness;
     }
 
     public void setHighlightLineThickness(int highlightLineThickness) {
-        this.highlightLineThickness = highlightLineThickness;
+        this.mHighlightLineThickness = highlightLineThickness;
         invalidate();
     }
 
     public int getHighlightLineMargin() {
-        return highlightLineMargin;
+        return mHighlightLineMargin;
     }
 
     public void setHighlightLineMargin(int highlightLineMargin) {
-        this.highlightLineMargin = highlightLineMargin;
+        this.mHighlightLineMargin = highlightLineMargin;
         invalidate();
     }
 
     public int getTextSize() {
-        return textSize;
+        return mTextSize;
     }
 
     public void setTextSize(int textSize) {
-        this.textSize = textSize;
-        for (int i = 0; i < parentLinearLayout.getChildCount(); i++) {
-            setupTextView((TextView) parentLinearLayout.getChildAt(i), textItems.get(i));
+        this.mTextSize = textSize;
+        for (int i = 0; i < mParentLinearLayout.getChildCount(); i++) {
+            setupTextView((TextView) mParentLinearLayout.getChildAt(i), mTextItems.get(i));
         }
     }
 
