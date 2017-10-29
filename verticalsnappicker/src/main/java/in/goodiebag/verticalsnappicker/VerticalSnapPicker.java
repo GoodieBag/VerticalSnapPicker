@@ -288,7 +288,7 @@ public class VerticalSnapPicker extends ScrollView {
         super.onDraw(canvas);
         startX = highlightLineMargin;
         startY = getScrollY() + padding;
-        endX = startX + canvas.getWidth() - 2 * startX;
+        endX = startX + getWidth() - 2 * startX;
         endY = startY;
 
         canvas.drawLine(startX, startY, endX, endY, paint);
