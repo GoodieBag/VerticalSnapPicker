@@ -1,5 +1,6 @@
 package in.goodiebag.verticalsnappicker.example;
 
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
         items.add(new VerticalSnapPicker.TextItem("Twelve","Roboto-Bold.ttf"));
         //items.add(new VerticalSnapPicker.TextItem("Four","Roboto-BoldCondensed.ttf"));
         picker.setList(items);
+        picker.setSelectedTextColor(Color.RED);
+        picker.setDefaultTextColor(Color.BLACK);
         picker.setOnSnapListener(new VerticalSnapPicker.VerticalSnapPickerListener() {
             @Override
             public void onSnap(int position) {
@@ -43,7 +46,10 @@ public class MainActivity extends AppCompatActivity {
         picker.postDelayed(new Runnable() {
             @Override
             public void run() {
-                picker.setSelectedIndex(10);
+                picker.setSelectedTextColor(Color.BLUE);
+                picker.setItemHeight(100);
+                picker.setVerticalOffset(75);
+                Log.d("Selected", "Color Changed: "+picker.getSelectedIndex());
             }
         }, 3000);
 

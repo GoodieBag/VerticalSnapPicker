@@ -53,7 +53,6 @@ public class VerticalSnapPicker extends ScrollView {
     int padding;
     int startX, startY, endX, endY;
     Paint paint = new Paint();
-    List<TextView> textViews = new ArrayList<>();
 
 
     private Handler handler;
@@ -120,10 +119,10 @@ public class VerticalSnapPicker extends ScrollView {
 
         return new ColorStateList(new int[][]{
                 new int[]{android.R.attr.state_selected}, // enabled
-                new int[]{-android.R.attr.state_selected}, // disabled
+                new int[]{}, // disabled
         }, new int[]{
-                selectedTextColor,
-                defaultTextColor
+                this.selectedTextColor,
+                this.defaultTextColor
         });
     }
 
@@ -215,10 +214,10 @@ public class VerticalSnapPicker extends ScrollView {
         }
         if (mSelectedIndex != 0 || mSelectedIndex <= textItems.size()) {
             TextView textView;
-            textView = textViews.get(mSelectedIndex);
+            textView = (TextView) parentLinearLayout.getChildAt(mSelectedIndex);
             textView.setSelected(true);
         }
-        previousSelected = textViews.get(mSelectedIndex);
+        previousSelected = parentLinearLayout.getChildAt(mSelectedIndex);
         ValueAnimator animator = ValueAnimator.ofInt(cst, stt);
         animator.setDuration(Math.abs(stt - cst) * 3);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -261,10 +260,11 @@ public class VerticalSnapPicker extends ScrollView {
 //        }
         if (mSelectedIndex != 0 || mSelectedIndex <= textItems.size()) {
             TextView textView;
-            textView = textViews.get(mSelectedIndex);
+            textView = (TextView) parentLinearLayout.getChildAt(mSelectedIndex);
             textView.setSelected(true);
         }
-        previousSelected = textViews.get(mSelectedIndex);
+        previousSelected = parentLinearLayout.getChildAt(mSelectedIndex);
+        ;
         ValueAnimator animator = ValueAnimator.ofInt(cst, stt);
         animator.setDuration(200);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -301,54 +301,46 @@ public class VerticalSnapPicker extends ScrollView {
         return textItems;
     }
 
-    public void setList(List<TextItem> list) {
+    public void setList(@NonNull List<TextItem> list) {
+        setList(list, 0);
+    }
+
+    public void setList(@NonNull List<TextItem> list, int selectedIndex) {
         this.textItems = list;
+        mSelectedIndex = -1;
         parentLinearLayout.removeAllViews();
         paddingAdded = false;
-        ColorStateList csl = getTextColorList();
         for (int i = 0; i < textItems.size(); i++) {
             TextItem item = textItems.get(i);
             TextView text = new TextView(getContext());
-            text.setText(item.getText());
-            if (item.getFont() != null) {
-                try {
-                    Typeface typeface = Typeface.createFromAsset(getResources().getAssets(), item.getFont());
-                    text.setTypeface(typeface);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-            text.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
-            text.setTextColor(csl);
-            text.setGravity(Gravity.CENTER);
             parentLinearLayout.addView(text);
-            text.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, itemHeight));
-            textViews.add(text);
+            setupTextView(text, item);
         }
-        textViews.get(0).setSelected(true);
-        previousSelected = textViews.get(0);
+        if (list.size() > 0) {
+            setSelectedIndex(selectedIndex < list.size() && selectedIndex > 0 ? selectedIndex : 0);
+        }
     }
 
-    public static class TextItem {
-        private String text;
-        private String font;
+    private void reload() {
+        int selected = mSelectedIndex;
+        Log.d("Selected", "Reloading: " + selected);
+        setList(textItems, selected);
+    }
 
-        public TextItem(@NonNull String text) {
-            this.text = text;
+    private void setupTextView(TextView text, TextItem item) {
+        text.setText(item.getText());
+        if (item.getFont() != null) {
+            try {
+                Typeface typeface = Typeface.createFromAsset(getResources().getAssets(), item.getFont());
+                text.setTypeface(typeface);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
-
-        public TextItem(@NonNull String text, @NonNull String font) {
-            this(text);
-            this.font = font;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public String getFont() {
-            return font;
-        }
+        text.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
+        text.setTextColor(getTextColorList());
+        text.setGravity(Gravity.CENTER);
+        text.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, itemHeight));
     }
 
     public int getItemHeight() {
@@ -357,9 +349,7 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setItemHeight(int itemHeight) {
         this.itemHeight = itemHeight;
-        int current = getSelectedIndex();
-        setList(textItems);
-        setSelectedIndex(current);
+        reload();
         requestLayout();
     }
 
@@ -367,24 +357,18 @@ public class VerticalSnapPicker extends ScrollView {
         return defaultTextColor;
     }
 
-    public void setDefaultTextColor(int defaultTextColor) {
+    public void setDefaultTextColor(@ColorInt int defaultTextColor) {
         this.defaultTextColor = defaultTextColor;
-        int current = getSelectedIndex();
-        setList(textItems);
-        setSelectedIndex(current);
-        //invalidate();
+        reload();
     }
 
     public int getSelectedTextColor() {
         return selectedTextColor;
     }
 
-    public void setSelectedTextColor(int selectedTextColor) {
+    public void setSelectedTextColor(@ColorInt int selectedTextColor) {
         this.selectedTextColor = selectedTextColor;
-        int current = getSelectedIndex();
-        setList(textItems);
-        setSelectedIndex(current);
-        //invalidate();
+        reload();
     }
 
     public int getHighlightLineColor() {
@@ -420,6 +404,18 @@ public class VerticalSnapPicker extends ScrollView {
 
     public void setTextSize(int textSize) {
         this.textSize = textSize;
+        for (int i = 0; i < parentLinearLayout.getChildCount(); i++) {
+            setupTextView((TextView) parentLinearLayout.getChildAt(i), textItems.get(i));
+        }
+    }
+
+    public int getVerticalOffset() {
+        return mOffset;
+    }
+
+    public void setVerticalOffset(int mOffset) {
+        this.mOffset = mOffset;
+        requestLayout();
     }
 
     public int getSelectedIndex() {
@@ -436,5 +432,28 @@ public class VerticalSnapPicker extends ScrollView {
 
     public interface VerticalSnapPickerListener {
         void onSnap(int position);
+    }
+
+
+    public static class TextItem {
+        private String text;
+        private String font;
+
+        public TextItem(@NonNull String text) {
+            this.text = text;
+        }
+
+        public TextItem(@NonNull String text, @NonNull String font) {
+            this(text);
+            this.font = font;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public String getFont() {
+            return font;
+        }
     }
 }
