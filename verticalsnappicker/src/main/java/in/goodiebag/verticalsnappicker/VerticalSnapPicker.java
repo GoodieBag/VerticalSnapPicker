@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.support.annotation.ColorInt;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -309,8 +310,14 @@ public class VerticalSnapPicker extends ScrollView {
             TextItem item = textItems.get(i);
             TextView text = new TextView(getContext());
             text.setText(item.getText());
-            Typeface typeface = Typeface.createFromAsset(getResources().getAssets(), item.getFont());
-            text.setTypeface(typeface);
+            if(item.getFont()!=null) {
+                try {
+                    Typeface typeface = Typeface.createFromAsset(getResources().getAssets(), item.getFont());
+                    text.setTypeface(typeface);
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }
+            }
             text.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
             text.setTextColor(textColorList);
             text.setGravity(Gravity.CENTER);
@@ -326,8 +333,12 @@ public class VerticalSnapPicker extends ScrollView {
         private String text;
         private String font;
 
-        public TextItem(String text, String font) {
+        public TextItem(@NonNull String text) {
             this.text = text;
+        }
+
+        public TextItem(@NonNull String text, @NonNull String font) {
+            this(text);
             this.font = font;
         }
 

@@ -3,10 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/VerticalSnapPicker.iml" filepath="$PROJECT_DIR$/VerticalSnapPicker.iml" />
-      <module fileurl="file://$PROJECT_DIR$/VerticalSnapPicker.iml" filepath="$PROJECT_DIR$/VerticalSnapPicker.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/verticalsnappicker/verticalsnappicker.iml" filepath="$PROJECT_DIR$/verticalsnappicker/verticalsnappicker.iml" />
       <module fileurl="file://$PROJECT_DIR$/verticalsnappicker/verticalsnappicker.iml" filepath="$PROJECT_DIR$/verticalsnappicker/verticalsnappicker.iml" />
     </modules>
   </component>
